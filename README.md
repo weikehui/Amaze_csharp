@@ -1,7 +1,11 @@
 # Amaze_csharp
 A C# version solver for Amaze.
 
-## Result
-result_optimized.txt
+# Steup & Run
 
-Note: There is some prolem in some solutions when the path looped, need to fix.
+Need mono.
+
+## Result
+result.txt - un-optimized solutions, no shortest, but ensure all levels are resolved.
+result_optimized.txt - optimized solutions, more shorter, but there are problem in some levels.
+
