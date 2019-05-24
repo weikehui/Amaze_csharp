@@ -1,10 +1,11 @@
-using System;
 using System.Collections.Generic;
 
 namespace Amaze.Solve
 {
 	public class Solver
 	{
+		private const int MAX_SOLVE_COUNT = 10;
+
 		public Solver (int[,] data)
 		{
 			_width = data.GetLength (1);
@@ -514,7 +515,7 @@ namespace Amaze.Solve
 		}
 
 		// public bool IsEnded => _pathSteams.Count <= 0;
-		public bool IsEnded => _solvedPathSteams.Count > 0;
+		public bool IsEnded => _solvedPathSteams.Count >= MAX_SOLVE_COUNT || _pathSteams.Count <= 0;
 
 		public void OutputSolutionPathSteams ()
 		{
@@ -528,13 +529,34 @@ namespace Amaze.Solve
 			}
 		}
 
-		public int[] OutputSolution ()
+		public int[] OutputShortestSolution ()
 		{
 			if (_solvedPathSteams.Count <= 0) {
 				return null;
 			}
 
-			return _solvedPathSteams [0].OutputSolution ();
+			int[] shortestSolution = null;
+			foreach (var pathSteam in _solvedPathSteams) {
+				var solution = pathSteam.OutputSolution ();
+				if (shortestSolution == null || solution.Length < shortestSolution.Length) {
+					shortestSolution = solution;
+				}
+			}
+
+			return shortestSolution;
+		}
+
+		public List<int[]> OutputSolutions ()
+		{
+			if (_solvedPathSteams.Count <= 0) {
+				return null;
+			}
+
+			var solutions = new List<int[]> ();
+			foreach (var pathSteam in _solvedPathSteams) {
+				solutions.Add (pathSteam.OutputSolution ());
+			}
+			return solutions;
 		}
 
 		#endregion

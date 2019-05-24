@@ -56,20 +56,14 @@ namespace Amaze
 			var solver = new Solver (data);
 			RunSolver (solver);
 
-			var duration = DateTime.Now - startTime;
+			var time = DateTime.Now - startTime;
 
 			var fileName = Path.GetFileName (filePath);
-			var output = $"{fileName}, {duration.TotalSeconds}";
-
-			var solution = solver.OutputSolution ();
-			if (solution == null || solution.Length <= 0) {
-				output += ", no solution.";
-				Console.WriteLine (output);
-				return;
-			}
-
-			output = solution.Aggregate (output, (current, step) => current + (", " + step));
-			Console.WriteLine (output);
+#if DEBUG
+			OutputSolutions (fileName, time, solver);
+#else
+			OutputSolution (fileName, time, solver);
+#endif
 		}
 
 		private static void RunSolver (Solver solver)
@@ -89,6 +83,37 @@ namespace Amaze
 #if DEBUG
 			solver.OutputSolutionPathSteams ();
 #endif
+		}
+
+		private static void OutputSolution (string fileName, TimeSpan time, Solver solver)
+		{
+			var outputPrefix = $"{fileName}, {time.TotalSeconds}";
+
+			var solution = solver.OutputShortestSolution ();
+			if (solution == null || solution.Length <= 0) {
+				outputPrefix += ", no solution.";
+				Console.WriteLine (outputPrefix);
+				return;
+			}
+
+			var output = solution.Aggregate (outputPrefix, (current, step) => current + (", " + step));
+			Console.WriteLine (output);
+		}
+
+		private static void OutputSolutions (string fileName, TimeSpan time, Solver solver)
+		{
+			var outputPrefix = $"{fileName}, {time.TotalSeconds}";
+
+			var solutions = solver.OutputSolutions ();
+			if (solutions == null || solutions.Count <= 0) {
+				Console.WriteLine (outputPrefix + ", no solution.");
+				return;
+			}
+
+			foreach (var solution in solutions) {
+				var output = solution.Aggregate (outputPrefix, (current, step) => current + (", " + step));
+				Console.WriteLine (output);
+			}
 		}
 	}
 }
