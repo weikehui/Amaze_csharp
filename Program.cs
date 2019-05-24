@@ -85,6 +85,10 @@ namespace Amaze
 			}
 
 			Debug.Log ("SOLVE END -----------");
+
+#if DEBUG
+			solver.OutputSolutionPathSteams ();
+#endif
 		}
 	}
 }

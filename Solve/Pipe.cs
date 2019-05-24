@@ -37,12 +37,10 @@ namespace Amaze.Solve
 			return _inFlowPointNodes.ContainsKey (point);
 		}
 
-		public void ForEachKeyPoint (KeyPoint startPoint, bool toBack, Action<KeyPoint> pointAction)
+		public void ForEachKeyPoint (KeyPoint startPoint, KeyPoint reversePoint, bool toBack, Action<KeyPoint> pointAction)
 		{
 			if (!_inFlowPointNodes.ContainsKey (startPoint)) {
-#if DEBUG
 				Debug.Log ($"start point {startPoint} is NOT in pipe {this}.");
-#endif
 				return;
 			}
 
@@ -50,12 +48,13 @@ namespace Amaze.Solve
 
 			// to reverse
 			var node = GetNextNode (_inFlowPointNodes [startPoint], !toBack);
-			for (; node != null; node = GetNextNode (node, !toBack)) {
+			for (; node != null && node.Value != reversePoint; node = GetNextNode (node, !toBack)) {
 				pointAction?.Invoke (node.Value);
 			}
+			pointAction?.Invoke (reversePoint);
 
 			// to end
-			var startNode = toBack ? _passingPoints.First : _passingPoints.Last;
+			var startNode = node ?? (toBack ? _passingPoints.Last : _passingPoints.First);
 			node = GetNextNode (startNode, toBack);
 			for (; node != null; node = GetNextNode (node, toBack)) {
 				pointAction?.Invoke (node.Value);

@@ -113,6 +113,7 @@ namespace Amaze.Solve
 
 			var cloneToPathNode = PathNode.Clone (toPathNode);
 			cloneToPathNode.ToBack = !toPathNode.ToBack;
+			cloneToPathNode.ReversePoint = cloneToPathNode.ToBack ? cloneToPathNode.Pipe.FrontPoint : cloneToPathNode.Pipe.BackPoint;
 			AddNode (cloneToPathNode);
 		}
 
@@ -131,12 +132,10 @@ namespace Amaze.Solve
 
 		private void UpdateMatrix (PathNode pathNode)
 		{
-			var pipe = pathNode.Pipe;
-			var toBack = pathNode.ToBack;
 			KeyPoint lastKeyPoint = null;
 			int lastDeltaX = 0, lastDeltaY = 0;
 
-			pipe.ForEachKeyPoint (_lastEndPoint, toBack, keyPoint => {
+			pathNode.ForEachPipeKeyPoint (keyPoint => {
 				if (lastKeyPoint == null) {
 					// first point
 					lastKeyPoint = keyPoint;
@@ -153,6 +152,9 @@ namespace Amaze.Solve
 
 				if (deltaX != lastDeltaX || deltaY != lastDeltaY) {
 					if (lastDeltaX != 0 || lastDeltaY != 0) {
+						if (lastKeyPoint.X == 5 && lastKeyPoint.Y == 3) {
+							Debug.Log ("xxxxx");
+						}
 						// turn direction
 						if (_pointMatrix [lastKeyPoint.Y, lastKeyPoint.X]++ == 0) {
 							_remainingPointCount--;
@@ -203,7 +205,7 @@ namespace Amaze.Solve
 			var lastDirection = Direction.Unknown;
 
 			foreach (var pathNode in _pathNodes) {
-				pathNode.Pipe.ForEachKeyPoint (pathNode.StartPoint, pathNode.ToBack, keyPoint => {
+				pathNode.ForEachPipeKeyPoint (keyPoint => {
 					if (keyPoint == lastKeyPoint) {
 						return;
 					}
@@ -252,7 +254,7 @@ namespace Amaze.Solve
 			HasBranch = hasBranch;
 
 			StartPoint = startPoint;
-			ReversePoint = toBack ? pipe.BackPoint : pipe.FrontPoint;
+			ReversePoint = toBack ? pipe.FrontPoint : pipe.BackPoint;
 		}
 
 		public static PathNode Clone (PathNode other)
@@ -282,6 +284,11 @@ namespace Amaze.Solve
 		public void RegisterId (int id)
 		{
 			_id = id;
+		}
+
+		public void ForEachPipeKeyPoint (Action<KeyPoint> keyPointAction)
+		{
+			Pipe.ForEachKeyPoint (StartPoint, ReversePoint, ToBack, keyPointAction);
 		}
 	}
 }
