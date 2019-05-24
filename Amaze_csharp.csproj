@@ -1,0 +1,232 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{A2DC4093-4E29-4615-88B3-FA52E9BCA1A0}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Amaze</RootNamespace>
+    <AssemblyName>amaze</AssemblyName>
+    <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Debug.cs" />
+    <Compile Include="Parse\Parser.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Solve\Direction.cs" />
+    <Compile Include="Solve\ConnectType.cs" />
+    <Compile Include="Solve\PathSteam.cs" />
+    <Compile Include="Solve\Pipe.cs" />
+    <Compile Include="Solve\KeyPoint.cs" />
+    <Compile Include="Solve\Solver.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="amaze_levels\001.xml" />
+    <Content Include="amaze_levels\002.xml" />
+    <Content Include="amaze_levels\003.xml" />
+    <Content Include="amaze_levels\004.xml" />
+    <Content Include="amaze_levels\005.xml" />
+    <Content Include="amaze_levels\006.xml" />
+    <Content Include="amaze_levels\007.xml" />
+    <Content Include="amaze_levels\008.xml" />
+    <Content Include="amaze_levels\009.xml" />
+    <Content Include="amaze_levels\010.xml" />
+    <Content Include="amaze_levels\011.xml" />
+    <Content Include="amaze_levels\012.xml" />
+    <Content Include="amaze_levels\013.xml" />
+    <Content Include="amaze_levels\014.xml" />
+    <Content Include="amaze_levels\015.xml" />
+    <Content Include="amaze_levels\016.xml" />
+    <Content Include="amaze_levels\017.xml" />
+    <Content Include="amaze_levels\018.xml" />
+    <Content Include="amaze_levels\019.xml" />
+    <Content Include="amaze_levels\020.xml" />
+    <Content Include="amaze_levels\021.xml" />
+    <Content Include="amaze_levels\022.xml" />
+    <Content Include="amaze_levels\023.xml" />
+    <Content Include="amaze_levels\024.xml" />
+    <Content Include="amaze_levels\025.xml" />
+    <Content Include="amaze_levels\026.xml" />
+    <Content Include="amaze_levels\027.xml" />
+    <Content Include="amaze_levels\028.xml" />
+    <Content Include="amaze_levels\029.xml" />
+    <Content Include="amaze_levels\030.xml" />
+    <Content Include="amaze_levels\031.xml" />
+    <Content Include="amaze_levels\032.xml" />
+    <Content Include="amaze_levels\033.xml" />
+    <Content Include="amaze_levels\034.xml" />
+    <Content Include="amaze_levels\035.xml" />
+    <Content Include="amaze_levels\036.xml" />
+    <Content Include="amaze_levels\037.xml" />
+    <Content Include="amaze_levels\038.xml" />
+    <Content Include="amaze_levels\039.xml" />
+    <Content Include="amaze_levels\040.xml" />
+    <Content Include="amaze_levels\041.xml" />
+    <Content Include="amaze_levels\042.xml" />
+    <Content Include="amaze_levels\043.xml" />
+    <Content Include="amaze_levels\044.xml" />
+    <Content Include="amaze_levels\045.xml" />
+    <Content Include="amaze_levels\046.xml" />
+    <Content Include="amaze_levels\047.xml" />
+    <Content Include="amaze_levels\048.xml" />
+    <Content Include="amaze_levels\049.xml" />
+    <Content Include="amaze_levels\050.xml" />
+    <Content Include="amaze_levels\051.xml" />
+    <Content Include="amaze_levels\052.xml" />
+    <Content Include="amaze_levels\053.xml" />
+    <Content Include="amaze_levels\054.xml" />
+    <Content Include="amaze_levels\055.xml" />
+    <Content Include="amaze_levels\056.xml" />
+    <Content Include="amaze_levels\057.xml" />
+    <Content Include="amaze_levels\058.xml" />
+    <Content Include="amaze_levels\059.xml" />
+    <Content Include="amaze_levels\060.xml" />
+    <Content Include="amaze_levels\061.xml" />
+    <Content Include="amaze_levels\062.xml" />
+    <Content Include="amaze_levels\063.xml" />
+    <Content Include="amaze_levels\064.xml" />
+    <Content Include="amaze_levels\065 dan.xml" />
+    <Content Include="amaze_levels\066 dan.xml" />
+    <Content Include="amaze_levels\067 dan.xml" />
+    <Content Include="amaze_levels\068 dan.xml" />
+    <Content Include="amaze_levels\069 dan.xml" />
+    <Content Include="amaze_levels\070 dan.xml" />
+    <Content Include="amaze_levels\071 dan.xml" />
+    <Content Include="amaze_levels\072 dan.xml" />
+    <Content Include="amaze_levels\073 dan.xml" />
+    <Content Include="amaze_levels\074 dan.xml" />
+    <Content Include="amaze_levels\075 dan.xml" />
+    <Content Include="amaze_levels\076 dan.xml" />
+    <Content Include="amaze_levels\077 dan.xml" />
+    <Content Include="amaze_levels\078 dan.xml" />
+    <Content Include="amaze_levels\079 dan.xml" />
+    <Content Include="amaze_levels\080 dan.xml" />
+    <Content Include="amaze_levels\081 dan.xml" />
+    <Content Include="amaze_levels\082 dan.xml" />
+    <Content Include="amaze_levels\083 dan.xml" />
+    <Content Include="amaze_levels\084 dan.xml" />
+    <Content Include="amaze_levels\085 dan.xml" />
+    <Content Include="amaze_levels\086 dan.xml" />
+    <Content Include="amaze_levels\087 dan.xml" />
+    <Content Include="amaze_levels\088 dan.xml" />
+    <Content Include="amaze_levels\089 dan.xml" />
+    <Content Include="amaze_levels\090 dan.xml" />
+    <Content Include="amaze_levels\091 dan.xml" />
+    <Content Include="amaze_levels\092 dan.xml" />
+    <Content Include="amaze_levels\093 dan.xml" />
+    <Content Include="amaze_levels\094 dan.xml" />
+    <Content Include="amaze_levels\095 dan.xml" />
+    <Content Include="amaze_levels\096 dan.xml" />
+    <Content Include="amaze_levels\097 dan.xml" />
+    <Content Include="amaze_levels\098 dan.xml" />
+    <Content Include="amaze_levels\099 dan.xml" />
+    <Content Include="amaze_levels\100.xml" />
+    <Content Include="amaze_levels\101.xml" />
+    <Content Include="amaze_levels\102.xml" />
+    <Content Include="amaze_levels\103.xml" />
+    <Content Include="amaze_levels\104.xml" />
+    <Content Include="amaze_levels\105.xml" />
+    <Content Include="amaze_levels\106.xml" />
+    <Content Include="amaze_levels\107 dan.xml" />
+    <Content Include="amaze_levels\108 dan.xml" />
+    <Content Include="amaze_levels\109 dan.xml" />
+    <Content Include="amaze_levels\110 dan.xml" />
+    <Content Include="amaze_levels\111 dan.xml" />
+    <Content Include="amaze_levels\112 dan.xml" />
+    <Content Include="amaze_levels\113 dan.xml" />
+    <Content Include="amaze_levels\114 dan.xml" />
+    <Content Include="amaze_levels\115 dan.xml" />
+    <Content Include="amaze_levels\116 dan.xml" />
+    <Content Include="amaze_levels\117 dan.xml" />
+    <Content Include="amaze_levels\118 dan.xml" />
+    <Content Include="amaze_levels\119 dan.xml" />
+    <Content Include="amaze_levels\120 dan.xml" />
+    <Content Include="amaze_levels\121 dan.xml" />
+    <Content Include="amaze_levels\122 dan.xml" />
+    <Content Include="amaze_levels\123 dan.xml" />
+    <Content Include="amaze_levels\124 dan.xml" />
+    <Content Include="amaze_levels\125 dan.xml" />
+    <Content Include="amaze_levels\126 dan.xml" />
+    <Content Include="amaze_levels\127 dan.xml" />
+    <Content Include="amaze_levels\128 dan.xml" />
+    <Content Include="amaze_levels\129 dan.xml" />
+    <Content Include="amaze_levels\130 dan.xml" />
+    <Content Include="amaze_levels\131 dan.xml" />
+    <Content Include="amaze_levels\132 dan.xml" />
+    <Content Include="amaze_levels\133 dan.xml" />
+    <Content Include="amaze_levels\134 dan.xml" />
+    <Content Include="amaze_levels\135.xml" />
+    <Content Include="amaze_levels\136.xml" />
+    <Content Include="amaze_levels\137.xml" />
+    <Content Include="amaze_levels\138.xml" />
+    <Content Include="amaze_levels\139.xml" />
+    <Content Include="amaze_levels\140.xml" />
+    <Content Include="amaze_levels\141.xml" />
+    <Content Include="amaze_levels\142.xml" />
+    <Content Include="amaze_levels\143.xml" />
+    <Content Include="amaze_levels\144.xml" />
+    <Content Include="amaze_levels\145 dan.xml" />
+    <Content Include="amaze_levels\146 dan.xml" />
+    <Content Include="amaze_levels\147 dan.xml" />
+    <Content Include="amaze_levels\148 dan.xml" />
+    <Content Include="amaze_levels\149 dan.xml" />
+    <Content Include="amaze_levels\150 dan.xml" />
+    <Content Include="amaze_levels\151 dan.xml" />
+    <Content Include="amaze_levels\152 dan.xml" />
+    <Content Include="amaze_levels\153 dan.xml" />
+    <Content Include="amaze_levels\154 dan.xml" />
+    <Content Include="amaze_levels\155 dan.xml" />
+    <Content Include="amaze_levels\156 dan.xml" />
+    <Content Include="amaze_levels\157 dan.xml" />
+    <Content Include="amaze_levels\158 dan.xml" />
+    <Content Include="amaze_levels\159 dan.xml" />
+    <Content Include="amaze_levels\160 dan.xml" />
+    <Content Include="amaze_levels\161 dan.xml" />
+    <Content Include="amaze_levels\162 dan.xml" />
+    <Content Include="amaze_levels\163 dan.xml" />
+    <Content Include="amaze_levels\164 dan.xml" />
+    <Content Include="amaze_levels\165 dan.xml" />
+    <Content Include="amaze_levels\166 dan.xml" />
+    <Content Include="amaze_levels\167 dan.xml" />
+    <Content Include="amaze_levels\168 dan.xml" />
+    <Content Include="amaze_levels\169 dan.xml" />
+    <Content Include="amaze_levels\170 dan.xml" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+</Project>
