@@ -26,6 +26,7 @@ namespace Amaze.Solve
 		public void AddKeyPoint (KeyPoint keyPoint, bool toBack)
 		{
 			var node = toBack ? _passingPoints.AddLast (keyPoint) : _passingPoints.AddFirst (keyPoint);
+
 			_inFlowPointNodes [keyPoint] = node;
 		}
 

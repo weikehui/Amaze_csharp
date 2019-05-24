@@ -408,6 +408,11 @@ namespace Amaze.Solve
 			}
 
 			NormalizePaths ();
+
+			// output
+			foreach (var pathSteam in _pathSteams) {
+				Debug.Log (pathSteam);
+			}
 		}
 
 		private void StartFromEndPoint ()
@@ -525,7 +530,6 @@ namespace Amaze.Solve
 
 			foreach (var pathSteam in _solvedPathSteams) {
 				Debug.Log (pathSteam);
-				Debug.Log (pathSteam.OutputMatrix ());
 			}
 		}
 

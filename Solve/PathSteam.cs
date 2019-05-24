@@ -7,6 +7,8 @@ namespace Amaze.Solve
 	{
 		private int _id = -1;
 
+		public int Id => _id;
+
 		private readonly LinkedList<PathNode> _pathNodes = new LinkedList<PathNode> ();
 
 		private readonly Dictionary<Pipe, List<LinkedListNode<PathNode>>> _pipeNodeMaps = new Dictionary<Pipe, List<LinkedListNode<PathNode>>> ();
@@ -34,6 +36,9 @@ namespace Amaze.Solve
 			foreach (var pathNode in _pathNodes) {
 				msg += pathNode + "\n";
 			}
+
+			msg += OutputMatrix ();
+
 			return msg;
 		}
 
@@ -152,9 +157,6 @@ namespace Amaze.Solve
 
 				if (deltaX != lastDeltaX || deltaY != lastDeltaY) {
 					if (lastDeltaX != 0 || lastDeltaY != 0) {
-						if (lastKeyPoint.X == 5 && lastKeyPoint.Y == 3) {
-							Debug.Log ("xxxxx");
-						}
 						// turn direction
 						if (_pointMatrix [lastKeyPoint.Y, lastKeyPoint.X]++ == 0) {
 							_remainingPointCount--;
