@@ -475,6 +475,7 @@ namespace Amaze.Solve
 			if (pathSteam.IsSolved) {
 				_removedPathSteams.Add (pathSteam);
 				_solvedPathSteams.Add (pathSteam);
+				pathSteam.TrimSolutionPaths ();
 				Debug.Log ($"path SOLVED, pathSteam: {pathSteam}");
 				return;
 			}

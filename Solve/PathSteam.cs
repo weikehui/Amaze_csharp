@@ -135,7 +135,7 @@ namespace Amaze.Solve
 			KeyPoint lastKeyPoint = null;
 			int lastDeltaX = 0, lastDeltaY = 0;
 
-			pathNode.ForEachPipeKeyPoint (keyPoint => {
+			pathNode.ForEachPipeAllKeyPoints (keyPoint => {
 				if (lastKeyPoint == null) {
 					// first point
 					lastKeyPoint = keyPoint;
@@ -197,6 +197,73 @@ namespace Amaze.Solve
 			return msg;
 		}
 
+		public void TrimSolutionPaths ()
+		{
+			if (!IsSolved) {
+				return;
+			}
+
+			foreach (var pathNode in _pathNodes) {
+				TrimPathNode (pathNode);
+			}
+		}
+
+		private void TrimPathNode (PathNode pathNode)
+		{
+			// find trimming points
+			var trimmingPoints = new List<KeyPoint> ();
+			var trimming = true;
+			KeyPoint lastPoint = null;
+			pathNode.ForEachPipeReversedKeyPoints (keyPoint => {
+				if (!trimming) {
+					return;
+				}
+
+				if (_pointMatrix [keyPoint.Y, keyPoint.X] <= 2) {
+					trimming = false;
+					return;
+				}
+
+				if (lastPoint == null) {
+					lastPoint = keyPoint;
+					return;
+				}
+
+				if (keyPoint.ConnectType != ConnectType.Turn && keyPoint != pathNode.StartPoint) {
+					return;
+				}
+
+				// check points in two key points
+				var deltaX = Math.Sign (keyPoint.X - lastPoint.X);
+				var deltaY = Math.Sign (keyPoint.Y - lastPoint.Y);
+				for (int x = lastPoint.X + deltaX, y = lastPoint.Y + deltaY; x != keyPoint.X || y != keyPoint.Y; x += deltaX, y += deltaY) {
+					if (_pointMatrix [y, x] <= 2) {
+						trimming = false;
+						return;
+					}
+				}
+
+				trimmingPoints.Add (keyPoint);
+				lastPoint = keyPoint;
+			});
+
+			if (trimmingPoints.Count <= 0) {
+				return;
+			}
+
+			lastPoint = pathNode.ReversePoint;
+			foreach (var trimmingPoint in trimmingPoints) {
+				var deltaX = Math.Sign (trimmingPoint.X - lastPoint.X);
+				var deltaY = Math.Sign (trimmingPoint.Y - lastPoint.Y);
+				for (int x = lastPoint.X, y = lastPoint.Y; x != trimmingPoint.X || y != trimmingPoint.Y; x += deltaX, y += deltaY) {
+					_pointMatrix [y, x] -= 2;
+				}
+				_pointMatrix [trimmingPoint.Y, trimmingPoint.X] -= 2;
+				lastPoint = trimmingPoint;
+			}
+			pathNode.ReversePoint = lastPoint;
+		}
+
 		public int[] OutputSolution ()
 		{
 			var directions = new List<int> ();
@@ -205,7 +272,7 @@ namespace Amaze.Solve
 			var lastDirection = Direction.Unknown;
 
 			foreach (var pathNode in _pathNodes) {
-				pathNode.ForEachPipeKeyPoint (keyPoint => {
+				pathNode.ForEachPipeAllKeyPoints (keyPoint => {
 					if (keyPoint == lastKeyPoint) {
 						return;
 					}
@@ -286,9 +353,14 @@ namespace Amaze.Solve
 			_id = id;
 		}
 
-		public void ForEachPipeKeyPoint (Action<KeyPoint> keyPointAction)
+		public void ForEachPipeAllKeyPoints (Action<KeyPoint> keyPointAction)
 		{
-			Pipe.ForEachKeyPoint (StartPoint, ReversePoint, ToBack, keyPointAction);
+			Pipe.ForEachAllKeyPoints (StartPoint, ReversePoint, ToBack, keyPointAction);
+		}
+
+		public void ForEachPipeReversedKeyPoints (Action<KeyPoint> keyPointAction)
+		{
+			Pipe.ForEachFromToKeyPoints (ReversePoint, StartPoint, ToBack, keyPointAction);
 		}
 	}
 }

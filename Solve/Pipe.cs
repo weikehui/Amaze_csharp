@@ -37,7 +37,7 @@ namespace Amaze.Solve
 			return _inFlowPointNodes.ContainsKey (point);
 		}
 
-		public void ForEachKeyPoint (KeyPoint startPoint, KeyPoint reversePoint, bool toBack, Action<KeyPoint> pointAction)
+		public void ForEachAllKeyPoints (KeyPoint startPoint, KeyPoint reversePoint, bool toBack, Action<KeyPoint> pointAction)
 		{
 			if (!_inFlowPointNodes.ContainsKey (startPoint)) {
 				Debug.Log ($"start point {startPoint} is NOT in pipe {this}.");
@@ -45,18 +45,40 @@ namespace Amaze.Solve
 			}
 
 			pointAction?.Invoke (startPoint);
+			var startNode = _inFlowPointNodes [startPoint];
+			LinkedListNode<KeyPoint> node;
 
-			// to reverse
-			var node = GetNextNode (_inFlowPointNodes [startPoint], !toBack);
-			for (; node != null && node.Value != reversePoint; node = GetNextNode (node, !toBack)) {
-				pointAction?.Invoke (node.Value);
+			if (reversePoint != startPoint) {
+				// to reverse
+				node = GetNextNode (startNode, !toBack);
+				for (; node != null && node.Value != reversePoint; node = GetNextNode (node, !toBack)) {
+					pointAction?.Invoke (node.Value);
+				}
+
+				pointAction?.Invoke (reversePoint);
+				startNode = node ?? (toBack ? _passingPoints.Last : _passingPoints.First);
 			}
-			pointAction?.Invoke (reversePoint);
 
 			// to end
-			var startNode = node ?? (toBack ? _passingPoints.Last : _passingPoints.First);
 			node = GetNextNode (startNode, toBack);
 			for (; node != null; node = GetNextNode (node, toBack)) {
+				pointAction?.Invoke (node.Value);
+			}
+		}
+
+		public void ForEachFromToKeyPoints (KeyPoint fromPoint, KeyPoint toPoint, bool toBack, Action<KeyPoint> pointAction)
+		{
+			if (!_inFlowPointNodes.ContainsKey (fromPoint)) {
+				Debug.Log ($"start point {fromPoint} is NOT in pipe {this}.");
+				return;
+			}
+
+			var node = _inFlowPointNodes [fromPoint];
+			for (; node != null && node.Value != toPoint; node = GetNextNode (node, toBack)) {
+				pointAction?.Invoke (node.Value);
+			}
+
+			if (node != null) {
 				pointAction?.Invoke (node.Value);
 			}
 		}
