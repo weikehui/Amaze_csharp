@@ -24,9 +24,13 @@ After build, you can run the "amaze.exe", there is two parameters:
 
 > mono amaze.exe folder-path|file-path [--optimized]
 
-* folder-path  - the foler of all level data files.
-* file-path    - single level data file.
-* --optimized  - optional, enable optimized solve way. **Note: there is bug when there is some pipes cross with itself in some levels.**
+|Parameter|Description|
+|--|--|
+|folder-path|the foler of all level data files.|
+|file-path|single level data file.|
+|--optimized|optional, enable optimized solve way.|
+
+**Note: if use optimized way, there is bug when there is some pipes cross with itself in some levels.**
 
 You can also run it quickly in project root directory:
 
@@ -44,7 +48,8 @@ You can also run it quickly in project root directory:
 
 ## Result
 
-result.txt - un-optimized solutions, no shortest, but ensure all levels are resolved.
-
-result_optimized.txt - optimized solutions, more shorter, but there are problem in some levels.
+|||
+|--|--|
+|result.txt|un-optimized solutions, no shortest, but ensure all levels are resolved.|
+|result_optimized.txt|optimized solutions, more shorter, but there are problem in some levels.|
 
