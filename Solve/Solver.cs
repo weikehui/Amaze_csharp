@@ -6,11 +6,12 @@ namespace Amaze.Solve
 	{
 		private const int MAX_SOLVE_COUNT = 10;
 
-		public Solver (int[,] data)
+		public Solver (int[,] data, bool optimized)
 		{
 			_width = data.GetLength (1);
 			_height = data.GetLength (0);
 			_data = data;
+			_optimized = optimized;
 
 			InitKeyPoints ();
 			InitPipes ();
@@ -28,6 +29,7 @@ namespace Amaze.Solve
 		private readonly int _width;
 		private readonly int _height;
 		private readonly int[,] _data;
+		private bool _optimized;
 
 		private (int, int) GetEndPosition (int x, int y, Direction direction)
 		{
@@ -481,7 +483,9 @@ namespace Amaze.Solve
 			if (pathSteam.IsSolved) {
 				_removedPathSteams.Add (pathSteam);
 				_solvedPathSteams.Add (pathSteam);
-				pathSteam.TrimSolutionPaths ();
+				if (_optimized) {
+					pathSteam.TrimSolutionPaths ();
+				}
 				Debug.Log ($"path SOLVED, pathSteam: {pathSteam}");
 				return;
 			}

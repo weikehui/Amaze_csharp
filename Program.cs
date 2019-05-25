@@ -11,19 +11,22 @@ namespace Amaze
 		public static void Main (string[] args)
 		{
 			if (args.Length <= 0) {
-				Debug.Log ("usage: amaze {path|directory}.");
+				Console.WriteLine ("usage: amaze {path|directory}.");
 				return;
 			}
 
-			if (SolveAllLevels (args [0])) {
+			var path = args [0];
+			var optimized = args.Length >= 2 && args [1] == "--optimized";
+
+			if (SolveAllLevels (path, optimized)) {
 				return;
 			}
 
-			SolveLevel (args [0]);
+			SolveLevel (path, optimized);
 		}
 
 
-		private static bool SolveAllLevels (string fileDirectory)
+		private static bool SolveAllLevels (string fileDirectory, bool optimized)
 		{
 			if (!Directory.Exists (fileDirectory)) {
 				return false;
@@ -31,13 +34,13 @@ namespace Amaze
 
 			var filePaths = Directory.GetFiles (fileDirectory, "*.xml", SearchOption.TopDirectoryOnly);
 			foreach (var filePath in filePaths) {
-				SolveLevel (filePath);
+				SolveLevel (filePath, optimized);
 			}
 
 			return true;
 		}
 
-		private static void SolveLevel (string filePath)
+		private static void SolveLevel (string filePath, bool optimized)
 		{
 			if (!File.Exists (filePath)) {
 				Console.WriteLine ($"level data in path [{filePath}] NOT found!");
@@ -53,7 +56,7 @@ namespace Amaze
 				return;
 			}
 
-			var solver = new Solver (data);
+			var solver = new Solver (data, optimized);
 			RunSolver (solver);
 
 			var time = DateTime.Now - startTime;
