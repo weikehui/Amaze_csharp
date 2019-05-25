@@ -1,4 +1,4 @@
 #!/bin/bash
 
-mono ../bin/Release/amaze.exe ../amaze_levels --optimized
+mono ./bin/Release/amaze.exe ./amaze_levels --optimized
 

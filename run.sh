@@ -1,4 +1,4 @@
 #!/bin/bash
 
-mono ../bin/Release/amaze.exe "$@"
+mono ./bin/Release/amaze.exe "$@"
 

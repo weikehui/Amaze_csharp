@@ -1,4 +1,4 @@
 #!/bin/bash
 
-mono ../bin/Release/amaze.exe ../amaze_levels
+mono ./bin/Release/amaze.exe ./amaze_levels
 

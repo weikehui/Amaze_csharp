@@ -11,7 +11,7 @@ namespace Amaze
 		public static void Main (string[] args)
 		{
 			if (args.Length <= 0) {
-				Console.WriteLine ("usage: amaze {path|directory}.");
+				Console.WriteLine ("usage: amaze {path|directory} [--optimized].");
 				return;
 			}
 
