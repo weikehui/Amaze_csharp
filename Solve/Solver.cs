@@ -5,6 +5,7 @@ namespace Amaze.Solve
 	public class Solver
 	{
 		private const int MAX_SOLVE_COUNT = 10;
+		private const int MAX_EXECUTE_COUNT = 10000;
 
 		public Solver (int[,] data)
 		{
@@ -323,9 +324,8 @@ namespace Amaze.Solve
 			}
 
 			var endPoint = GetKeyPoint (endPosX, endPosY);
-			var ended = pipe.IsPointPassed (endPoint);
-			pipe.AddKeyPoint (endPoint, toBack);
 
+			bool ended;
 			switch (endPoint.ConnectType) {
 			case ConnectType.End:
 				endPoint.InEndPipe = pipe;
@@ -334,13 +334,20 @@ namespace Amaze.Solve
 
 			case ConnectType.Turn:
 				endPoint.InPassingPipe = pipe;
+				// ended if loop
+				ended = pipe.IsPointPassed (endPoint);
 				break;
 
 			case ConnectType.Tee:
 				endPoint.InEndPipe = pipe;
 				ended = true;
 				break;
+
+			default:
+				ended = true;
+				break;
 			}
+			pipe.AddKeyPoint (endPoint, toBack);
 
 			if (ended) {
 				return;
@@ -374,7 +381,7 @@ namespace Amaze.Solve
 		#region Path
 
 		private HashSet<PathSteam> _pathSteams;
-		private List<PathSteam> _newPathSteams;
+		private Stack<PathSteam> _newPathSteams;
 		private List<PathSteam> _removedPathSteams;
 		private List<PathSteam> _solvedPathSteams;
 		private int _nextPathId;
@@ -382,7 +389,7 @@ namespace Amaze.Solve
 		private void InitPaths ()
 		{
 			_pathSteams = new HashSet<PathSteam> ();
-			_newPathSteams = new List<PathSteam> ();
+			_newPathSteams = new Stack<PathSteam> ();
 			_removedPathSteams = new List<PathSteam> ();
 			_solvedPathSteams = new List<PathSteam> ();
 		}
@@ -390,7 +397,7 @@ namespace Amaze.Solve
 		private void RegisterPathSteam (PathSteam pathSteam)
 		{
 			pathSteam.RegisterId (_nextPathId++);
-			_newPathSteams.Add (pathSteam);
+			_newPathSteams.Push (pathSteam);
 		}
 
 		public void Start ()
@@ -462,17 +469,22 @@ namespace Amaze.Solve
 
 		private void NormalizePaths ()
 		{
-			// new
-			foreach (var pathSteam in _newPathSteams) {
-				_pathSteams.Add (pathSteam);
-			}
-			_newPathSteams.Clear ();
-
 			// remove
 			foreach (var pathSteam in _removedPathSteams) {
 				_pathSteams.Remove (pathSteam);
 			}
 			_removedPathSteams.Clear ();
+
+			// new
+			// foreach (var pathSteam in _newPathSteams) {
+			// 	_pathSteams.Add (pathSteam);
+			// }
+			// _newPathSteams.Clear ();
+
+			while (_pathSteams.Count < MAX_EXECUTE_COUNT && _newPathSteams.Count > 0) {
+				var pathSteam = _newPathSteams.Pop ();
+				_pathSteams.Add (pathSteam);
+			}
 		}
 
 		private void PathSteamTick (PathSteam pathSteam)
