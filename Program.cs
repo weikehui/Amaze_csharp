@@ -11,12 +11,12 @@ namespace Amaze
 		public static void Main (string[] args)
 		{
 			if (args.Length <= 0) {
-				Console.WriteLine ("usage: amaze {path|directory} [--optimized].");
+				Console.WriteLine ("usage: amaze {path|directory} [--unoptimized].");
 				return;
 			}
 
 			var path = args [0];
-			var optimized = args.Length >= 2 && args [1] == "--optimized";
+			var optimized = args.Length < 2 || args [1] != "--unoptimized";
 
 			if (SolveAllLevels (path, optimized)) {
 				return;
@@ -61,7 +61,7 @@ namespace Amaze
 
 			var time = DateTime.Now - startTime;
 			var fileName = Path.GetFileName (filePath);
-			OutputLevel (fileName, time, solver, optimized);
+			OutputLevel (fileName, time, solver);
 		}
 
 		private static void RunSolver (Solver solver)
@@ -79,7 +79,7 @@ namespace Amaze
 			Debug.Log ("SOLVE END -----------");
 		}
 
-		private static void OutputLevel (string fileName, TimeSpan time, Solver solver, bool optimized)
+		private static void OutputLevel (string fileName, TimeSpan time, Solver solver)
 		{
 #if DEBUG
 			OutputSolutions (fileName, time, solver);
