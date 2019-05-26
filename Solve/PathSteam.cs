@@ -315,7 +315,7 @@ namespace Amaze.Solve
 
 		public bool IsSolved => _remainingPointCount <= 0;
 
-		public bool IsFailed => !IsSolved && _endPoint.ConnectType == ConnectType.End;
+		public bool IsFailed => !IsSolved && _endPoint.ConnectType == ConnectType.End || _pathNodes.Count > Settings.MAX_PATH_NODE_COUNT;
 
 		private bool _isTrimmed;
 

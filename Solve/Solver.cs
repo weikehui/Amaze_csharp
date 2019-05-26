@@ -4,18 +4,17 @@ namespace Amaze.Solve
 {
 	public class Solver
 	{
-		private const int MAX_SOLVE_COUNT = 10;
-		private const int MAX_EXECUTE_COUNT = 10000;
-
-		public Solver (int[,] data)
+		public Solver (int[,] data, bool optimized)
 		{
 			_width = data.GetLength (1);
 			_height = data.GetLength (0);
 			_data = data;
+			_optimized = optimized;
 
 			InitKeyPoints ();
 			InitPipes ();
 			InitPaths ();
+			InitSolutions ();
 		}
 
 		public override string ToString ()
@@ -29,6 +28,7 @@ namespace Amaze.Solve
 		private readonly int _width;
 		private readonly int _height;
 		private readonly int[,] _data;
+		private readonly bool _optimized;
 
 		private (int, int) GetEndPosition (int x, int y, Direction direction)
 		{
@@ -414,7 +414,7 @@ namespace Amaze.Solve
 				break;
 			}
 
-			NormalizePaths ();
+			NormalizePathList ();
 
 			// output
 			foreach (var pathSteam in _pathSteams) {
@@ -459,7 +459,7 @@ namespace Amaze.Solve
 				PathSteamTick (pathSteam);
 			}
 
-			NormalizePaths ();
+			NormalizePathList ();
 
 			// output
 			foreach (var pathSteam in _pathSteams) {
@@ -467,7 +467,7 @@ namespace Amaze.Solve
 			}
 		}
 
-		private void NormalizePaths ()
+		private void NormalizePathList ()
 		{
 			// remove
 			foreach (var pathSteam in _removedPathSteams) {
@@ -476,15 +476,16 @@ namespace Amaze.Solve
 			_removedPathSteams.Clear ();
 
 			// new
-			// foreach (var pathSteam in _newPathSteams) {
-			// 	_pathSteams.Add (pathSteam);
-			// }
-			// _newPathSteams.Clear ();
-
-			while (_pathSteams.Count < MAX_EXECUTE_COUNT && _newPathSteams.Count > 0) {
+			while (_pathSteams.Count < Settings.MAX_EXECUTE_PATH_COUNT && _newPathSteams.Count > 0) {
 				var pathSteam = _newPathSteams.Pop ();
 				_pathSteams.Add (pathSteam);
 			}
+
+			// solved
+			foreach (var pathSteam in _solvedPathSteams) {
+				AddSolution (pathSteam);
+			}
+			_solvedPathSteams.Clear ();
 		}
 
 		private void PathSteamTick (PathSteam pathSteam)
@@ -528,36 +529,40 @@ namespace Amaze.Solve
 			otherPathSteam.AddNode (new PathNode (pipe, false, true));
 		}
 
-		// public bool IsEnded => _pathSteams.Count <= 0;
-		public bool IsEnded => _solvedPathSteams.Count >= MAX_SOLVE_COUNT || _pathSteams.Count <= 0;
+		#endregion
 
-		public void OptimizeSolutions ()
+
+		#region Solution
+
+		public bool IsEnded => _solutions.Count >= Settings.MAX_SOLVE_COUNT || _pathSteams.Count <= 0;
+
+		private List<int[]> _solutions;
+
+		private void InitSolutions ()
 		{
-			foreach (var pathSteam in _solvedPathSteams) {
-				pathSteam.TrimSolutionPaths ();
-			}
+			_solutions = new List<int[]> (Settings.MAX_SOLVE_COUNT * 2);
 		}
 
-		public void OutputSolutionPathSteams ()
+		private void AddSolution (PathSteam pathSteam)
 		{
-			if (_solvedPathSteams.Count <= 0) {
-				Debug.Log ("no solution.");
+			if (_optimized) {
+				pathSteam.TrimSolutionPaths ();
 			}
 
-			foreach (var pathSteam in _solvedPathSteams) {
-				Debug.Log (pathSteam);
+			var solution = pathSteam.OutputSolution ();
+			if (solution != null && solution.Length > 0) {
+				_solutions.Add (solution);
 			}
 		}
 
 		public int[] OutputShortestSolution ()
 		{
-			if (_solvedPathSteams.Count <= 0) {
+			if (_solutions.Count <= 0) {
 				return null;
 			}
 
 			int[] shortestSolution = null;
-			foreach (var pathSteam in _solvedPathSteams) {
-				var solution = pathSteam.OutputSolution ();
+			foreach (var solution in _solutions) {
 				if (shortestSolution == null || solution.Length < shortestSolution.Length) {
 					shortestSolution = solution;
 				}
@@ -568,15 +573,7 @@ namespace Amaze.Solve
 
 		public List<int[]> OutputSolutions ()
 		{
-			if (_solvedPathSteams.Count <= 0) {
-				return null;
-			}
-
-			var solutions = new List<int[]> ();
-			foreach (var pathSteam in _solvedPathSteams) {
-				solutions.Add (pathSteam.OutputSolution ());
-			}
-			return solutions;
+			return _solutions;
 		}
 
 		#endregion
