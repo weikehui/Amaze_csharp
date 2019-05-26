@@ -6,12 +6,11 @@ namespace Amaze.Solve
 	{
 		private const int MAX_SOLVE_COUNT = 10;
 
-		public Solver (int[,] data, bool optimized)
+		public Solver (int[,] data)
 		{
 			_width = data.GetLength (1);
 			_height = data.GetLength (0);
 			_data = data;
-			_optimized = optimized;
 
 			InitKeyPoints ();
 			InitPipes ();
@@ -29,7 +28,6 @@ namespace Amaze.Solve
 		private readonly int _width;
 		private readonly int _height;
 		private readonly int[,] _data;
-		private bool _optimized;
 
 		private (int, int) GetEndPosition (int x, int y, Direction direction)
 		{
@@ -260,7 +258,7 @@ namespace Amaze.Solve
 			startPoint.InPassingPipe = pipe;
 
 			FillPipePoints (pipe, startPoint, horizontalDirection, true);
-			if (pipe.BackPoint != startPoint) {
+			if (startPoint != pipe.BackPoint.Value) {
 				FillPipePoints (pipe, startPoint, verticalDirection, false);
 			}
 		}
@@ -284,7 +282,7 @@ namespace Amaze.Solve
 			startPoint.InPassingPipe = pipe;
 
 			FillPipePoints (pipe, startPoint, passingHorizontal ? Direction.Right : Direction.Up, true);
-			if (pipe.BackPoint != startPoint) {
+			if (startPoint != pipe.BackPoint.Value) {
 				FillPipePoints (pipe, startPoint, passingHorizontal ? Direction.Left : Direction.Down, false);
 			}
 		}
@@ -424,11 +422,11 @@ namespace Amaze.Solve
 				return;
 			}
 
-			var toBack = _startPoint == pipe.FrontPoint;
-			var pathSteam = new PathSteam (_startPoint, _width, _height, _validPointCount);
+			var toBack = _startPoint == pipe.FrontPoint.Value;
+			var pathSteam = new PathSteam (_width, _height, _validPointCount, _startPoint);
 			RegisterPathSteam (pathSteam);
 
-			var pathNode = new PathNode (pipe, toBack, false, _startPoint);
+			var pathNode = new PathNode (pipe, toBack, false);
 			pathSteam.AddNode (pathNode);
 		}
 
@@ -439,14 +437,13 @@ namespace Amaze.Solve
 				return;
 			}
 
-			var pathSteam = new PathSteam (_startPoint, _width, _height, _validPointCount);
+			var pathSteam = new PathSteam (_width, _height, _validPointCount, _startPoint);
+			pathSteam.AddNode (new PathNode (pipe, true, true));
 			RegisterPathSteam (pathSteam);
 
-			var otherPathSteam = PathSteam.Clone (pathSteam);
+			var otherPathSteam = new PathSteam (_width, _height, _validPointCount, _startPoint);
+			otherPathSteam.AddNode (new PathNode (pipe, false, true));
 			RegisterPathSteam (otherPathSteam);
-
-			pathSteam.AddNode (new PathNode (pipe, true, true, _startPoint));
-			otherPathSteam.AddNode (new PathNode (pipe, false, true, _startPoint));
 		}
 
 		public void Tick ()
@@ -483,9 +480,6 @@ namespace Amaze.Solve
 			if (pathSteam.IsSolved) {
 				_removedPathSteams.Add (pathSteam);
 				_solvedPathSteams.Add (pathSteam);
-				if (_optimized) {
-					pathSteam.TrimSolutionPaths ();
-				}
 				Debug.Log ($"path SOLVED, pathSteam: {pathSteam}");
 				return;
 			}
@@ -518,13 +512,19 @@ namespace Amaze.Solve
 			var otherPathSteam = PathSteam.Clone (pathSteam);
 			RegisterPathSteam (otherPathSteam);
 
-			var startPoint = pathSteam.LastEndPoint;
-			pathSteam.AddNode (new PathNode (pipe, true, true, startPoint));
-			otherPathSteam.AddNode (new PathNode (pipe, false, true, startPoint));
+			pathSteam.AddNode (new PathNode (pipe, true, true));
+			otherPathSteam.AddNode (new PathNode (pipe, false, true));
 		}
 
 		// public bool IsEnded => _pathSteams.Count <= 0;
 		public bool IsEnded => _solvedPathSteams.Count >= MAX_SOLVE_COUNT || _pathSteams.Count <= 0;
+
+		public void OptimizeSolutions ()
+		{
+			foreach (var pathSteam in _solvedPathSteams) {
+				pathSteam.TrimSolutionPaths ();
+			}
+		}
 
 		public void OutputSolutionPathSteams ()
 		{

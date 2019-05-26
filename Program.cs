@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.IO;
 using System.Linq;
 using Amaze.Parse;
@@ -56,17 +56,12 @@ namespace Amaze
 				return;
 			}
 
-			var solver = new Solver (data, optimized);
+			var solver = new Solver (data);
 			RunSolver (solver);
 
 			var time = DateTime.Now - startTime;
-
 			var fileName = Path.GetFileName (filePath);
-#if DEBUG
-			OutputSolutions (fileName, time, solver);
-#else
-			OutputSolution (fileName, time, solver);
-#endif
+			OutputLevel (fileName, time, solver, optimized);
 		}
 
 		private static void RunSolver (Solver solver)
@@ -85,6 +80,29 @@ namespace Amaze
 
 #if DEBUG
 			solver.OutputSolutionPathSteams ();
+#endif
+		}
+
+		private static void OutputLevel (string fileName, TimeSpan time, Solver solver, bool optimized)
+		{
+#if DEBUG
+			solver.OutputSolutionPathSteams ();
+			OutputSolutions (fileName, time, solver);
+
+			if (!optimized) {
+				return;
+			}
+
+			Debug.Log ("OPTIMIZED --------- ");
+			solver.OptimizeSolutions ();
+			solver.OutputSolutionPathSteams ();
+			OutputSolutions (fileName, time, solver);
+#else
+			if (optimized) {
+				solver.OptimizeSolutions ();
+			}
+
+			OutputSolution (fileName, time, solver);
 #endif
 		}
 

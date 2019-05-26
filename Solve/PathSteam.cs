@@ -5,46 +5,17 @@ namespace Amaze.Solve
 {
 	public class PathSteam
 	{
-		private int _id = -1;
-
-		public int Id => _id;
-
-		private readonly LinkedList<PathNode> _pathNodes = new LinkedList<PathNode> ();
-
-		private readonly Dictionary<Pipe, List<LinkedListNode<PathNode>>> _pipeNodeMaps = new Dictionary<Pipe, List<LinkedListNode<PathNode>>> ();
-
-		private KeyPoint _lastEndPoint;
-
-		private int[,] _pointMatrix;
-
-		private int _remainingPointCount;
-
 		private PathSteam ()
 		{
 		}
 
-		public PathSteam (KeyPoint startPoint, int matrixWidth, int matrixHeight, int pointCount)
+		public PathSteam (int matrixWidth, int matrixHeight, int pointCount, KeyPoint startPoint)
 		{
-			_lastEndPoint = startPoint;
-			_pointMatrix = new int[matrixHeight, matrixWidth];
+			_endPoint = startPoint;
+
+			_pointPathMatrix = new Dictionary<PathNode, int>[matrixHeight, matrixWidth];
+			_totalPointCount = pointCount;
 			_remainingPointCount = pointCount;
-		}
-
-		public override string ToString ()
-		{
-			var msg = $"[{_id}]: remaining {_remainingPointCount}, endPoint {_lastEndPoint}, nodes [{_pathNodes.Count}]:\n";
-			foreach (var pathNode in _pathNodes) {
-				msg += pathNode + "\n";
-			}
-
-			msg += OutputMatrix ();
-
-			return msg;
-		}
-
-		public void RegisterId (int id)
-		{
-			_id = id;
 		}
 
 		public static PathSteam Clone (PathSteam other)
@@ -56,33 +27,58 @@ namespace Amaze.Solve
 
 		private void CloneMember (PathSteam other)
 		{
-			foreach (var otherNode in other._pathNodes) {
-				var cloneNode = PathNode.Clone (otherNode);
-				RegisterNode (cloneNode);
-			}
-
-			_lastEndPoint = other._lastEndPoint;
-
-			// matrix
-			var matrixWidth = other._pointMatrix.GetLength (1);
-			var matrixHeight = other._pointMatrix.GetLength (0);
-			_pointMatrix = new int[matrixHeight, matrixWidth];
-			Array.Copy (other._pointMatrix, _pointMatrix, matrixWidth * matrixHeight);
-
-			_remainingPointCount = other._remainingPointCount;
+			var cloneNodeMaps = ClonePathNodes (other);
+			CloneMatrix (other, cloneNodeMaps);
 		}
 
-		public void AddNode (PathNode pathNode)
+		public override string ToString ()
 		{
-			RegisterNode (pathNode);
-			UpdateMatrix (pathNode);
+			var msg = $"[{_id}]: remaining {_remainingPointCount}, endPoint {_endPoint}\n";
 
-			_lastEndPoint = pathNode.ToBack ? pathNode.Pipe.BackPoint : pathNode.Pipe.FrontPoint;
+			msg += OutputPathNodes ();
+			msg += OutputMatrix ();
+
+			return msg;
 		}
+
+
+		#region Id
+
+		private int _id = -1;
+
+		public void RegisterId (int id)
+		{
+			_id = id;
+		}
+
+		#endregion
+
+
+		#region Path Node
+
+		private readonly LinkedList<PathNode> _pathNodes = new LinkedList<PathNode> ();
+
+		private readonly Dictionary<Pipe, List<LinkedListNode<PathNode>>> _pipeNodeMaps = new Dictionary<Pipe, List<LinkedListNode<PathNode>>> ();
+
+		private KeyPoint _endPoint;
+
+		public KeyPoint EndPoint => _endPoint;
+
+		public Pipe NextPipe => _endPoint.InPassingPipe;
 
 		public bool IsPipePassed (Pipe pipe)
 		{
 			return _pipeNodeMaps.ContainsKey (pipe);
+		}
+
+		public void AddNode (PathNode pathNode)
+		{
+			pathNode.StartNode = pathNode.Pipe.GetPointNode (_endPoint, false);
+
+			RegisterNode (pathNode);
+			UpdateMatrix (pathNode);
+
+			_endPoint = pathNode.ToBack ? pathNode.Pipe.BackPoint.Value : pathNode.Pipe.FrontPoint.Value;
 		}
 
 		public (LinkedListNode<PathNode>, LinkedListNode<PathNode>) GetRepeatableNode (Pipe pipe)
@@ -116,10 +112,8 @@ namespace Amaze.Solve
 			var toPathNode = toNode.Value;
 			toPathNode.HasBranch = false;
 
-			var cloneToPathNode = PathNode.Clone (toPathNode);
-			cloneToPathNode.ToBack = !toPathNode.ToBack;
-			cloneToPathNode.ReversePoint = cloneToPathNode.ToBack ? cloneToPathNode.Pipe.FrontPoint : cloneToPathNode.Pipe.BackPoint;
-			AddNode (cloneToPathNode);
+			var newToPathNode = new PathNode (toPathNode.Pipe, !toPathNode.ToBack, false);
+			AddNode (newToPathNode);
 		}
 
 		private void RegisterNode (PathNode pathNode)
@@ -135,63 +129,178 @@ namespace Amaze.Solve
 			}
 		}
 
+		private Dictionary<PathNode, PathNode> ClonePathNodes (PathSteam other)
+		{
+			_endPoint = other._endPoint;
+
+			var cloneNodeMaps = new Dictionary<PathNode, PathNode> (other._pathNodes.Count);
+			foreach (var otherNode in other._pathNodes) {
+				var cloneNode = PathNode.Clone (otherNode);
+				RegisterNode (cloneNode);
+				cloneNodeMaps.Add (otherNode, cloneNode);
+			}
+
+			return cloneNodeMaps;
+		}
+
+		private string OutputPathNodes ()
+		{
+			var msg = $"nodes [{_pathNodes.Count}]:\n";
+			foreach (var pathNode in _pathNodes) {
+				msg += pathNode + "\n";
+			}
+			return msg;
+		}
+
+		#endregion
+
+
+		#region Matrix
+
+		//private int[,] _pointMatrix;
+
+		private Dictionary<PathNode, int>[,] _pointPathMatrix;
+
+		private int _totalPointCount;
+		private int _remainingPointCount;
+
+		private int PointMatrixWidth => _pointPathMatrix.GetLength (1);
+		private int PointMatrixHeight => _pointPathMatrix.GetLength (0);
+
 		private void UpdateMatrix (PathNode pathNode)
 		{
-			KeyPoint lastKeyPoint = null;
-			int lastDeltaX = 0, lastDeltaY = 0;
-
-			pathNode.ForEachPipeAllKeyPoints (keyPoint => {
-				if (lastKeyPoint == null) {
-					// first point
-					lastKeyPoint = keyPoint;
-					return;
+			LinkedListNode<KeyPoint> lastKeyPointNode = null;
+			pathNode.ForEachPipeAllPointNodes (keyPointNode => {
+				if (lastKeyPointNode == null) {
+					lastKeyPointNode = keyPointNode;
+					return true;
 				}
 
-				var deltaX = Math.Sign (keyPoint.X - lastKeyPoint.X);
-				var deltaY = Math.Sign (keyPoint.Y - lastKeyPoint.Y);
-				for (int x = lastKeyPoint.X, y = lastKeyPoint.Y; x != keyPoint.X || y != keyPoint.Y; x += deltaX, y += deltaY) {
-					if (_pointMatrix [y, x]++ == 0) {
-						_remainingPointCount--;
-					}
+				var deltaX = Math.Sign (keyPointNode.Value.X - lastKeyPointNode.Value.X);
+				var deltaY = Math.Sign (keyPointNode.Value.Y - lastKeyPointNode.Value.Y);
+				for (int x = lastKeyPointNode.Value.X, y = lastKeyPointNode.Value.Y;
+					x != keyPointNode.Value.X || y != keyPointNode.Value.Y;
+					x += deltaX, y += deltaY) {
+					PassMatrix (pathNode, x, y);
 				}
 
-				if (deltaX != lastDeltaX || deltaY != lastDeltaY) {
-					if (lastDeltaX != 0 || lastDeltaY != 0) {
-						// turn direction
-						if (_pointMatrix [lastKeyPoint.Y, lastKeyPoint.X]++ == 0) {
-							_remainingPointCount--;
-						}
-					}
-
-					lastDeltaX = deltaX;
-					lastDeltaY = deltaY;
-				}
-
-				lastKeyPoint = keyPoint;
+				lastKeyPointNode = keyPointNode;
+				return true;
 			});
 
-			if (_pointMatrix [lastKeyPoint.Y, lastKeyPoint.X]++ == 0) {
+			PassMatrix (pathNode, lastKeyPointNode.Value.X, lastKeyPointNode.Value.Y);
+		}
+
+		private void PassMatrix (PathNode pathNode, int x, int y)
+		{
+			var paths = _pointPathMatrix [y, x];
+			if (paths == null) {
+				paths = new Dictionary<PathNode, int> { { pathNode, 1 } };
+				_pointPathMatrix [y, x] = paths;
 				_remainingPointCount--;
+				return;
+			}
+
+			if (paths.ContainsKey (pathNode)) {
+				paths [pathNode]++;
+			} else {
+				paths.Add (pathNode, 1);
 			}
 		}
 
-		public bool IsSolved => _remainingPointCount <= 0;
+		private void UnPassMatrix (PathNode pathNode, int x, int y)
+		{
+			var paths = _pointPathMatrix [y, x];
+			if (paths == null || !paths.ContainsKey (pathNode)) {
+				return;
+			}
 
-		public bool IsFailed => !IsSolved && _lastEndPoint.ConnectType == ConnectType.End;
+			if (paths [pathNode] > 1) {
+				paths [pathNode]--;
+				return;
+			}
 
-		public Pipe NextPipe => _lastEndPoint.InPassingPipe;
+			paths.Remove (pathNode);
 
-		public KeyPoint LastEndPoint => _lastEndPoint;
+			if (paths.Count <= 0) {
+				_pointPathMatrix [y, x] = null;
+			}
+		}
+
+		private int[,] ExtractPathPassMatrix (PathNode pathNode)
+		{
+			var width = PointMatrixWidth;
+			var height = PointMatrixHeight;
+			var pathMatrix = new int[height, width];
+
+			for (var y = 0; y < height; y++) {
+				for (var x = 0; x < width; x++) {
+					var paths = _pointPathMatrix [y, x];
+					if (paths == null || !paths.ContainsKey (pathNode)) {
+						continue;
+					}
+
+					pathMatrix [y, x] = paths [pathNode];
+				}
+			}
+
+			return pathMatrix;
+		}
+
+		private int GetMatrixPassedCount (int x, int y)
+		{
+			var paths = _pointPathMatrix [y, x];
+			if (paths == null) {
+				return 0;
+			}
+
+			var passedCount = 0;
+			foreach (var count in paths.Values) {
+				passedCount += count;
+			}
+			return passedCount;
+		}
+
+		private int GetMatrixPassedPathCount (int x, int y)
+		{
+			var paths = _pointPathMatrix [y, x];
+			return paths?.Count ?? 0;
+		}
+
+		private void CloneMatrix (PathSteam other, Dictionary<PathNode, PathNode> cloneNodeMaps)
+		{
+			var width = other.PointMatrixWidth;
+			var height = other.PointMatrixHeight;
+			_pointPathMatrix = new Dictionary<PathNode, int>[height, width];
+
+			for (var y = 0; y < height; y++) {
+				for (var x = 0; x < width; x++) {
+					var otherPaths = other._pointPathMatrix [y, x];
+					if (otherPaths == null) {
+						continue;
+					}
+
+					var paths = new Dictionary<PathNode, int> ();
+					foreach (var otherPath in otherPaths) {
+						paths.Add (cloneNodeMaps [otherPath.Key], otherPath.Value);
+					}
+					_pointPathMatrix [y, x] = paths;
+				}
+			}
+
+			_totalPointCount = other._totalPointCount;
+			_remainingPointCount = other._remainingPointCount;
+		}
 
 		public string OutputMatrix ()
 		{
 			var msg = "matrix:\n";
 
-			var width = _pointMatrix.GetLength (1);
-			var height = _pointMatrix.GetLength (0);
+			var width = PointMatrixWidth;
+			var height = PointMatrixHeight;
 			for (var y = 0; y < height; y++) {
 				for (var x = 0; x < width; x++) {
-					msg += _pointMatrix [y, x] + " ";
+					msg += GetMatrixPassedCount (x, y) + " ";
 				}
 				msg += "\n";
 			}
@@ -199,8 +308,23 @@ namespace Amaze.Solve
 			return msg;
 		}
 
+		#endregion
+
+
+		#region Solution
+
+		public bool IsSolved => _remainingPointCount <= 0;
+
+		public bool IsFailed => !IsSolved && _endPoint.ConnectType == ConnectType.End;
+
+		private bool _isTrimmed;
+
 		public void TrimSolutionPaths ()
 		{
+			if (_isTrimmed) {
+				return;
+			}
+
 			if (!IsSolved) {
 				return;
 			}
@@ -208,62 +332,80 @@ namespace Amaze.Solve
 			foreach (var pathNode in _pathNodes) {
 				TrimPathNode (pathNode);
 			}
+
+			_isTrimmed = true;
 		}
 
 		private void TrimPathNode (PathNode pathNode)
 		{
-			// find trimming points
-			var trimmingPoints = new List<KeyPoint> ();
+			var passedMatrix = ExtractPathPassMatrix (pathNode);
+			var trimmingKeyPointNodes = new List<LinkedListNode<KeyPoint>> ();
 			var trimming = true;
-			KeyPoint lastPoint = null;
-			pathNode.ForEachPipeReversedKeyPoints (keyPoint => {
+			LinkedListNode<KeyPoint> lastKeyPointNode = null;
+
+			pathNode.ForEachPipeReversedPointNodes (keyPointNode => {
 				if (!trimming) {
-					return;
+					return false;
 				}
 
-				if (_pointMatrix [keyPoint.Y, keyPoint.X] <= 2) {
+				var keyPointPathCount = GetMatrixPassedPathCount (keyPointNode.Value.X, keyPointNode.Value.Y);
+				if (keyPointPathCount < 2 && passedMatrix [keyPointNode.Value.Y, keyPointNode.Value.X] < 2) {
 					trimming = false;
-					return;
+					return false;
 				}
 
-				if (lastPoint == null) {
-					lastPoint = keyPoint;
-					return;
+				if (lastKeyPointNode == null) {
+					// start point
+					lastKeyPointNode = keyPointNode;
+					return true;
 				}
 
-				if (keyPoint.ConnectType != ConnectType.Turn && keyPoint != pathNode.StartPoint) {
-					return;
+				if (keyPointNode.Value.ConnectType != ConnectType.Turn && keyPointNode != pathNode.StartNode) {
+					// no record if not a turn point
+					return true;
 				}
 
 				// check points in two key points
-				var deltaX = Math.Sign (keyPoint.X - lastPoint.X);
-				var deltaY = Math.Sign (keyPoint.Y - lastPoint.Y);
-				for (int x = lastPoint.X + deltaX, y = lastPoint.Y + deltaY; x != keyPoint.X || y != keyPoint.Y; x += deltaX, y += deltaY) {
-					if (_pointMatrix [y, x] <= 2) {
+				var deltaX = Math.Sign (keyPointNode.Value.X - lastKeyPointNode.Value.X);
+				var deltaY = Math.Sign (keyPointNode.Value.Y - lastKeyPointNode.Value.Y);
+				for (int x = lastKeyPointNode.Value.X, y = lastKeyPointNode.Value.Y;
+					x != keyPointNode.Value.X || y != keyPointNode.Value.Y;
+					x += deltaX, y += deltaY) {
+					var passedPathCount = GetMatrixPassedPathCount (x, y);
+					if (passedPathCount < 2 && passedMatrix [y, x] < 2) {
 						trimming = false;
-						return;
+						return false;
 					}
+
+					passedMatrix [y, x]--;
 				}
 
-				trimmingPoints.Add (keyPoint);
-				lastPoint = keyPoint;
+				trimmingKeyPointNodes.Add (keyPointNode);
+				lastKeyPointNode = keyPointNode;
+				return true;
 			});
 
-			if (trimmingPoints.Count <= 0) {
+			if (trimming) {
+				trimmingKeyPointNodes.Add (pathNode.StartNode);
+			}
+
+			if (trimmingKeyPointNodes.Count <= 0) {
 				return;
 			}
 
-			lastPoint = pathNode.ReversePoint;
-			foreach (var trimmingPoint in trimmingPoints) {
-				var deltaX = Math.Sign (trimmingPoint.X - lastPoint.X);
-				var deltaY = Math.Sign (trimmingPoint.Y - lastPoint.Y);
-				for (int x = lastPoint.X, y = lastPoint.Y; x != trimmingPoint.X || y != trimmingPoint.Y; x += deltaX, y += deltaY) {
-					_pointMatrix [y, x] -= 2;
+			var reverseKeyPointNode = pathNode.ReverseNode;
+			foreach (var trimmingKeyPointNode in trimmingKeyPointNodes) {
+				var deltaX = Math.Sign (trimmingKeyPointNode.Value.X - reverseKeyPointNode.Value.X);
+				var deltaY = Math.Sign (trimmingKeyPointNode.Value.Y - reverseKeyPointNode.Value.Y);
+				for (int x = reverseKeyPointNode.Value.X, y = reverseKeyPointNode.Value.Y;
+					x != trimmingKeyPointNode.Value.X || y != trimmingKeyPointNode.Value.Y;
+					x += deltaX, y += deltaY) {
+					UnPassMatrix (pathNode, x, y);
 				}
-				_pointMatrix [trimmingPoint.Y, trimmingPoint.X] -= 2;
-				lastPoint = trimmingPoint;
+
+				reverseKeyPointNode = trimmingKeyPointNode;
 			}
-			pathNode.ReversePoint = lastPoint;
+			pathNode.ReverseNode = reverseKeyPointNode;
 		}
 
 		public int[] OutputSolution ()
@@ -272,32 +414,58 @@ namespace Amaze.Solve
 
 			KeyPoint lastKeyPoint = null;
 			var lastDirection = Direction.Unknown;
+			var pointMatrix = new int[PointMatrixHeight, PointMatrixWidth];
+			var remainingPointCount = _totalPointCount;
 
 			foreach (var pathNode in _pathNodes) {
-				pathNode.ForEachPipeAllKeyPoints (keyPoint => {
-					if (keyPoint == lastKeyPoint) {
-						return;
-					}
-
+				pathNode.ForEachPipeAllPointNodesPassReversed (keyPointNode => {
 					if (lastKeyPoint == null) {
-						lastKeyPoint = keyPoint;
-						return;
+						lastKeyPoint = keyPointNode.Value;
+						return true;
 					}
 
-					var direction = DirectionExtensions.DeltaDirection (keyPoint.X - lastKeyPoint.X, keyPoint.Y - lastKeyPoint.Y);
-					lastKeyPoint = keyPoint;
-
-					if (direction == lastDirection) {
-						return;
+					if (keyPointNode.Value == lastKeyPoint) {
+						return true;
 					}
 
-					directions.Add ((int)direction);
+					var deltaX = Math.Sign (keyPointNode.Value.X - lastKeyPoint.X);
+					var deltaY = Math.Sign (keyPointNode.Value.Y - lastKeyPoint.Y);
+
+					// detect direction change
+					var direction = DirectionExtensions.DeltaDirection (deltaX, deltaY);
+					if (direction == Direction.Unknown) {
+						Console.WriteLine ("-------------------------------");
+						Console.WriteLine ($"!!!!!! CAN link key point ({lastKeyPoint} -> {keyPointNode.Value} !!!!!!");
+						Console.WriteLine ("-------------------------------");
+					}
+					if (direction != lastDirection) {
+						directions.Add ((int)direction);
+					}
+
+					// change remaining ount
+					for (int x = lastKeyPoint.X, y = lastKeyPoint.Y; x != keyPointNode.Value.X || y != keyPointNode.Value.Y; x += deltaX, y += deltaY) {
+						if (pointMatrix [y, x]++ == 0) {
+							if (--remainingPointCount <= 0) {
+								return false;
+							}
+						}
+					}
+					if (pointMatrix [keyPointNode.Value.Y, keyPointNode.Value.X]++ == 0) {
+						if (--remainingPointCount <= 0) {
+							return false;
+						}
+					}
+
+					lastKeyPoint = keyPointNode.Value;
 					lastDirection = direction;
+					return true;
 				});
 			}
 
 			return directions.ToArray ();
 		}
+
+		#endregion
 	}
 
 
@@ -309,21 +477,21 @@ namespace Amaze.Solve
 		public bool ToBack;
 		public bool HasBranch;
 
-		public KeyPoint StartPoint;
-		public KeyPoint ReversePoint;
+		public LinkedListNode<KeyPoint> StartNode;
+		public LinkedListNode<KeyPoint> ReverseNode;
 
 		private PathNode ()
 		{
 		}
 
-		public PathNode (Pipe pipe, bool toBack, bool hasBranch, KeyPoint startPoint)
+		// public PathNode (Pipe pipe, bool toBack, bool hasBranch, LinkedListNode<KeyPoint> startNode)
+		public PathNode (Pipe pipe, bool toBack, bool hasBranch)
 		{
 			Pipe = pipe;
 			ToBack = toBack;
 			HasBranch = hasBranch;
 
-			StartPoint = startPoint;
-			ReversePoint = toBack ? pipe.FrontPoint : pipe.BackPoint;
+			ReverseNode = toBack ? pipe.FrontPoint : pipe.BackPoint;
 		}
 
 		public static PathNode Clone (PathNode other)
@@ -335,19 +503,18 @@ namespace Amaze.Solve
 
 		public override string ToString ()
 		{
-			return $"{_id}: pipe {Pipe}, {(ToBack ? "toBack" : "toFront")}{(HasBranch ? ", branch" : "")}";
+			return
+				$"{_id}: pipe {Pipe}, start {StartNode.Value}, reverse {ReverseNode.Value}, {(ToBack ? "toBack" : "toFront")}{(HasBranch ? ", branch" : "")}";
 		}
 
 		private void CloneMember (PathNode other)
 		{
-			_id = other._id;
-
 			Pipe = other.Pipe;
 			ToBack = other.ToBack;
 			HasBranch = other.HasBranch;
 
-			StartPoint = other.StartPoint;
-			ReversePoint = other.ReversePoint;
+			StartNode = other.StartNode;
+			ReverseNode = other.ReverseNode;
 		}
 
 		public void RegisterId (int id)
@@ -355,14 +522,65 @@ namespace Amaze.Solve
 			_id = id;
 		}
 
-		public void ForEachPipeAllKeyPoints (Action<KeyPoint> keyPointAction)
+		public void ForEachPipeAllPointNodes (Predicate<LinkedListNode<KeyPoint>> keyPointPredicate)
 		{
-			Pipe.ForEachAllKeyPoints (StartPoint, ReversePoint, ToBack, keyPointAction);
+			if (keyPointPredicate == null) {
+				return;
+			}
+
+			for (var node = ReverseNode; node != null; node = ToBack ? node.Next : node.Previous) {
+				if (!keyPointPredicate (node)) {
+					return;
+				}
+			}
 		}
 
-		public void ForEachPipeReversedKeyPoints (Action<KeyPoint> keyPointAction)
+		public void ForEachPipeReversedPointNodes (Predicate<LinkedListNode<KeyPoint>> keyPointPredicate)
 		{
-			Pipe.ForEachFromToKeyPoints (ReversePoint, StartPoint, ToBack, keyPointAction);
+			if (keyPointPredicate == null) {
+				return;
+			}
+
+			for (var node = ReverseNode; node != StartNode; node = ToBack ? node.Next : node.Previous) {
+				if (node == null) {
+					Console.WriteLine ("-------------------------------");
+					Console.WriteLine ($"!!!!!! can NOT reach start node {StartNode} form reverse node {ReverseNode} !!!!!!");
+					Console.WriteLine ("-------------------------------");
+					return;
+				}
+
+				if (!keyPointPredicate (node)) {
+					return;
+				}
+			}
+
+			keyPointPredicate (StartNode);
+		}
+
+		public void ForEachPipeAllPointNodesPassReversed (Predicate<LinkedListNode<KeyPoint>> keyPointPredicate)
+		{
+			if (keyPointPredicate == null) {
+				return;
+			}
+
+			for (var node = StartNode; node != ReverseNode; node = ToBack ? node.Previous : node.Next) {
+				if (node == null) {
+					Console.WriteLine ("-------------------------------");
+					Console.WriteLine ($"!!!!!! can NOT reach reverse node {ReverseNode} form start node {StartNode} !!!!!!");
+					Console.WriteLine ("-------------------------------");
+					return;
+				}
+
+				if (!keyPointPredicate (node)) {
+					return;
+				}
+			}
+
+			for (var node = ReverseNode; node != null; node = ToBack ? node.Next : node.Previous) {
+				if (!keyPointPredicate (node)) {
+					return;
+				}
+			}
 		}
 	}
 }
